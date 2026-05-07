@@ -7,6 +7,21 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import Shell from 'gi://Shell';
 
+const Cursor = Clutter.CursorType ?? Meta.Cursor;
+
+function setCursor(actor, cursor) {
+  if (typeof Clutter.CursorType !== 'undefined' && actor && 'cursor_type' in actor) {
+    try {
+      actor.cursor_type = cursor;
+      return;
+    } catch (e) {
+      // Fall back to the global cursor API below.
+    }
+  }
+
+  global.display.set_cursor(cursor);
+}
+
 export class ScreenOCR {
   constructor() {
     this._imageFile = null;
@@ -65,8 +80,6 @@ export class ScreenOCR {
       let overlayRight = null;
       let fullOverlay = null;
 
-      global.display.set_cursor(Meta.Cursor.CROSSHAIR);
-
       // Initial overlay covering all the screen
       fullOverlay = new St.Widget({
         style: 'background-color: rgba(0, 0, 0, 0.5);',
@@ -121,6 +134,8 @@ export class ScreenOCR {
         width: global.screen_width,
         height: global.screen_height
       });
+      
+      setCursor(captureActor, Cursor.CROSSHAIR);
 
       // Whiete border marquise
       selectionActor = new St.Widget({
@@ -140,7 +155,7 @@ export class ScreenOCR {
 
       if (!grab) {
         console.error('Failed to grab modal');
-        global.display.set_cursor(Meta.Cursor.DEFAULT);
+        setCursor(captureActor, Cursor.DEFAULT);
         [fullOverlay, overlayTop, overlayBottom, overlayLeft, overlayRight, captureActor, selectionActor].forEach(actor => {
           if (actor) {
             Main.uiGroup.remove_child(actor);
@@ -183,7 +198,7 @@ export class ScreenOCR {
         if (buttonReleaseId) captureActor.disconnect(buttonReleaseId);
         if (keyPressId) captureActor.disconnect(keyPressId);
 
-        global.display.set_cursor(Meta.Cursor.DEFAULT);
+        setCursor(captureActor, Cursor.DEFAULT);
 
         Main.popModal(grab);
         [fullOverlay, overlayTop, overlayBottom, overlayLeft, overlayRight, captureActor, selectionActor].forEach(actor => {
@@ -387,4 +402,3 @@ export class ScreenOCR {
 function isFileEmpty(file) {
   return file.query_info('standard::size', 0, null).get_size() === 0;
 }
-
