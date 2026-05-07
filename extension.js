@@ -74,7 +74,9 @@ export default class extends Extension {
 
   _updateButton(show) {
     if (show && !this._button) {
-      this._button = new PanelMenu.Button({ reactive: true, track_hover: true, style_class: 'panel-button' });
+      this._button = new PanelMenu.Button(0.0, 'Text Grabber', true);
+	
+      this._button.clear_actions();
 
       // Use an icon instead of text
       let icon = new St.Icon({
